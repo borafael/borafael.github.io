@@ -10,9 +10,11 @@ function start(canvas) {
 }
 
 function init() {
-	for(var i = 0; i < 1000; i++) {
-		var position = new Vector(Math.floor(Math.random() * 1500), Math.floor(Math.random() * 1500));
-		var speed = new Vector(0, 0);
+	for(var i = 0; i < 500; i++) {
+		var position = new Vector(750, 450);
+		var angle = Math.floor(Math.random() * 360) * 2 * Math.PI / 360;
+		var initialSpeed = 2.5;
+		var speed = new Vector(initialSpeed * Math.cos(angle), initialSpeed * Math.sin(angle));
 		var acceleration = new Vector(0, 0);
 		var mass = 1;
 		objects.push(new Thing(position, speed, acceleration, mass));
@@ -74,11 +76,12 @@ function update() {
 					var speed = new Vector(0, 0);
 					var acceleration = new Vector(0, 0);
 					var mass = objects[i] + objects[j];
-
+/*
 					objects[j].speed = new Vector(0, 0);
 					objects[j].acceleration = new Vector(0, 0);
 					objects[j].mass = objects[j].mass + objects[i].mass;
 					objects.splice(i, 1);
+*/
 				}
 			}
 		}
@@ -91,8 +94,10 @@ function update() {
 				var pos1 = objects[i].position;
 				var pos2 = objects[j].position;
 				var distance = pos2.sub(pos1).abs();
-				var c = g * objects[j].mass / (distance * distance);
-				force = force.add(pos2.sub(pos1).mul(c));
+				if (distance != 0) {
+					var c = g * objects[j].mass / (distance * distance);
+					force = force.add(pos2.sub(pos1).mul(c));
+				}
 			}
 		}
 		objects[i].acceleration = objects[i].acceleration.add(force);
