@@ -10,11 +10,11 @@ function start(canvas) {
 }
 
 function init() {
-	for(var i = 0; i < 100; i++) {
-		var position = new Vector(Math.floor(Math.random() * 800), Math.floor(Math.random() * 800));
+	for(var i = 0; i < 1000; i++) {
+		var position = new Vector(Math.floor(Math.random() * 1500), Math.floor(Math.random() * 1500));
 		var speed = new Vector(0, 0);
 		var acceleration = new Vector(0, 0);
-		var mass = i % 10 == 0 ? 10 : 1;
+		var mass = 1;
 		objects.push(new Thing(position, speed, acceleration, mass));
 	}
 }
@@ -69,7 +69,7 @@ function update() {
 				var pos2 = objects[j].position;
 				var distance = pos2.sub(pos1).abs();
 
-				if (distance <= (objects[i].mass + objects[j].mass)/2) {
+				if (distance <= (objects[i].mass + objects[j].mass)) {
 					var position = new Vector(objects[i].position.x, objects[i].position.y);
 					var speed = new Vector(0, 0);
 					var acceleration = new Vector(0, 0);
@@ -105,11 +105,11 @@ function update() {
 }
 
 function render(ctx) {
-	ctx.clearRect(0, 0, 800, 800);
+	ctx.clearRect(0, 0, 1500, 900);
 	for(var i = 0; i < objects.length; i++) {
 		circle(ctx, objects[i].position.x, objects[i].position.y, objects[i].mass);
-		ctx.font = "10px Arial";
-		ctx.fillText(objects[i].mass, objects[i].position.x, objects[i].position.y);
+//		ctx.font = "10px Arial";
+//		ctx.fillText(objects[i].mass, objects[i].position.x, objects[i].position.y);
 	};
 }
 
