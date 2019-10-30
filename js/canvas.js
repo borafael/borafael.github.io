@@ -1,7 +1,8 @@
 var shouldKeepLooping = true;
 var interval = 10;
 var objects = [];
-var g = 0.00001;
+var g = 0.0001;
+var ticksPerLoop = 0.1;
 
 function start(canvas) {
 	var ctx = canvas.getContext("2d");
@@ -13,7 +14,7 @@ function init() {
 	for(var i = 0; i < 500; i++) {
 		var position = new Vector(750, 450);
 		var angle = Math.floor(Math.random() * 360) * 2 * Math.PI / 360;
-		var initialSpeed = 2.5;
+		var initialSpeed = 10;
 		var speed = new Vector(initialSpeed * Math.cos(angle), initialSpeed * Math.sin(angle));
 		var acceleration = new Vector(0, 0);
 		var mass = 1;
@@ -104,8 +105,8 @@ function update() {
 	};
 
 	for (var i = 0; i < objects.length; i++) {
-		objects[i].speed = objects[i].speed.add(objects[i].acceleration);
-		objects[i].position = objects[i].position.add(objects[i].speed);
+		objects[i].position = objects[i].position.add(objects[i].speed.mul(ticksPerLoop));
+		objects[i].speed = objects[i].speed.add(objects[i].acceleration.mul(ticksPerLoop));
 	};
 }
 
@@ -113,8 +114,6 @@ function render(ctx) {
 	ctx.clearRect(0, 0, 1500, 900);
 	for(var i = 0; i < objects.length; i++) {
 		circle(ctx, objects[i].position.x, objects[i].position.y, objects[i].mass);
-//		ctx.font = "10px Arial";
-//		ctx.fillText(objects[i].mass, objects[i].position.x, objects[i].position.y);
 	};
 }
 
