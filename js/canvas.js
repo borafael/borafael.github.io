@@ -2,22 +2,24 @@ var shouldKeepLooping = true;
 var interval = 10;
 var objects = [];
 var g = 0.0001;
-var ticksPerLoop = 0.1;
+var ticksPerLoop = 1;
 
 function start(canvas) {
 	var ctx = canvas.getContext("2d");
+	canvas.addEventListener('click', function(event) {
+		alert(event);
+	});
+
 	init();
 	loop(ctx);
 }
 
 function init() {
-	for(var i = 0; i < 500; i++) {
-		var position = new Vector(750, 450);
-		var angle = Math.floor(Math.random() * 360) * 2 * Math.PI / 360;
-		var initialSpeed = 10;
-		var speed = new Vector(initialSpeed * Math.cos(angle), initialSpeed * Math.sin(angle));
+	for(var i = 0; i < 1000; i++) {
+		var position = new Vector(Math.floor(Math.random() * 1500), Math.floor(Math.random() * 900));
+		var speed = new Vector(0, 0);
 		var acceleration = new Vector(0, 0);
-		var mass = 1;
+		var mass = 2;
 		objects.push(new Thing(position, speed, acceleration, mass));
 	}
 }
@@ -68,21 +70,21 @@ function update() {
 		var force = new Vector(0, 0);
 		for (var j = 0; j < objects.length; j++) {
 			if (objects[i] && objects[j] && i != j) {
+				var m1 = objects[i].mass;
+				var m2 = objects[j].mass;
 				var pos1 = objects[i].position;
 				var pos2 = objects[j].position;
+				var mass1 = objects[i].mass;
+				var mass2 = objects[j].mass;
+				var speed1 = objects[i].speed;
+				var speed2 = objects[j].speed;
 				var distance = pos2.sub(pos1).abs();
 
-				if (distance <= (objects[i].mass + objects[j].mass)) {
-					var position = new Vector(objects[i].position.x, objects[i].position.y);
-					var speed = new Vector(0, 0);
-					var acceleration = new Vector(0, 0);
-					var mass = objects[i] + objects[j];
-/*
-					objects[j].speed = new Vector(0, 0);
-					objects[j].acceleration = new Vector(0, 0);
-					objects[j].mass = objects[j].mass + objects[i].mass;
+				if (distance <= (Math.log(objects[i].mass) + Math.log(objects[j].mass))) {
+					objects[j].position = pos1.add(pos2).mul(0.5); 
+					objects[j].speed = speed1.mul(m1/(m1+m2)).add(speed2.mul(m2/(m1+m2))); 
+					objects[j].mass = m1 + m2;
 					objects.splice(i, 1);
-*/
 				}
 			}
 		}
@@ -113,7 +115,7 @@ function update() {
 function render(ctx) {
 	ctx.clearRect(0, 0, 1500, 900);
 	for(var i = 0; i < objects.length; i++) {
-		circle(ctx, objects[i].position.x, objects[i].position.y, objects[i].mass);
+		circle(ctx, objects[i].position.x, objects[i].position.y, Math.log(objects[i].mass));
 	};
 }
 
