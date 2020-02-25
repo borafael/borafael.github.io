@@ -1,36 +1,26 @@
 var shouldKeepLooping = true;
-var interval = 1;
+var interval = 10;
 var objects = [];
-var g = 0.001;
+var g = 0.0001;
 var ticksPerLoop = 1;
-var CENTER = new Vector(750, 450);
-var ZERO = new Vector(0, 0);
 
 function start(canvas) {
 	var ctx = canvas.getContext("2d");
+	canvas.addEventListener('click', function(event) {
+		alert(event);
+	});
+
 	init();
 	loop(ctx);
 }
 
-function random(n) {
-	return Math.floor(Math.random() * n);
-}
-
 function init() {
-	for(var i = 0; i < 5000; i++) {
-		var angle = ranom(360) * 2 * Math.PI / 360;
-		var distance random(10)
-		var position = new Vector(Math.floor(Math.random() * 1500), Math.floor(Math.random() * 900)); 
-		var mass = Math.pow(Math.E, 1);
-		objects.push(new Thing(position, ZERO, ZERO, mass));
-	}
-}
-
-function initRandom() {
-	for(var i = 0; i < 5000; i++) {
-		var position = new Vector(Math.floor(Math.random() * 1500), Math.floor(Math.random() * 900)); 
-		var mass = Math.pow(Math.E, 1);
-		objects.push(new Thing(position, ZERO, ZERO, mass));
+	for(var i = 0; i < 1000; i++) {
+		var position = new Vector(Math.floor(Math.random() * 1500), Math.floor(Math.random() * 900));
+		var speed = new Vector(0, 0);
+		var acceleration = new Vector(0, 0);
+		var mass = 2;
+		objects.push(new Thing(position, speed, acceleration, mass));
 	}
 }
 
