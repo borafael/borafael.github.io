@@ -15,7 +15,7 @@ function start(canvas) {
 }
 
 function init() {
-	for(var i = 0; i < 1000; i++) {
+	for(var i = 0; i < 2000; i++) {
 		var position = new Vector(Math.floor(Math.random() * 1500), Math.floor(Math.random() * 900));
 		var speed = new Vector(0, 0);
 		var acceleration = new Vector(0, 0);
@@ -81,8 +81,8 @@ function update() {
 				var distance = pos2.sub(pos1).abs();
 
 				if (distance <= (Math.log(objects[i].mass) + Math.log(objects[j].mass))) {
-					objects[j].position = pos1.add(pos2).mul(0.5); 
-					objects[j].speed = speed1.mul(m1/(m1+m2)).add(speed2.mul(m2/(m1+m2))); 
+					objects[j].position = pos1.add(pos2).mul(0.5);
+					objects[j].speed = speed1.mul(m1/(m1+m2)).add(speed2.mul(m2/(m1+m2)));
 					objects[j].mass = m1 + m2;
 					objects.splice(i, 1);
 				}
