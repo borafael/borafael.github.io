@@ -1,58 +1,70 @@
 var shouldKeepLooping = true;
 var interval = 10;
 var objects = [];
-var g = 0.0001;
+var g = 0.0000001;
 var ticksPerLoop = 1;
+var width = 1500;
+var height = 900;
+var center = new Vector(width / 2, height / 2);
+var attractor = new Thing(new Vector(center.x, center.y), new Vector(0, 0), new Vector(0, 0), 100000);
 
 function start(canvas) {
 	var ctx = canvas.getContext("2d");
-	canvas.addEventListener('click', function(event) {
-		alert(event);
+	canvas.addEventListener('mousemove', function(event) {
+		//attractor.position = new Vector(event.x, event.y);
 	});
 
 	init();
 	loop(ctx);
 }
 
+function getTangentSpeed(position) {
+	var speed = attractor.position.sub(position).normal();
+
+	if (position.y > center.y) {
+		return speed.mul(-1);
+	} else {
+		return speed;
+	}
+}
+
 function init() {
-	for(var i = 0; i < 2000; i++) {
-		var position = new Vector(Math.floor(Math.random() * 1500), Math.floor(Math.random() * 900));
+	for(var i = 0; i < 10000; i++) {
+		var position = new Vector(Math.floor(Math.random() * width), Math.floor(Math.random() * height));
+		//var speed = getTangentSpeed(position).mul(2 / center.sub(position).abs());
 		var speed = new Vector(0, 0);
-		var acceleration = new Vector(0, 0);
-		var mass = 2;
-		objects.push(new Thing(position, speed, acceleration, mass));
+		objects.push(new Thing(position, speed, new Vector(0, 0), 2));
 	}
 }
 
 function Vector(x, y) {
-	return {
-		"x": x,
-		"y": y,
-		"add": function add(vector) {
-			return new Vector(this.x + vector.x, this.y + vector.y);
-		},
-		"sub": function sub(vector) {
-			return new Vector(this.x - vector.x, this.y - vector.y);
-		},
-		"mul": function sub(num) {
-			return new Vector(this.x * num, this.y * num);
-		},
-		"dot": function sub(vector) {
-			return this.x * vector.x + this.y * vector.y;
-		},
-		"abs": function abs() {
-			return Math.sqrt(this.x * this.x + this.y * this.y);
-		}
+	this.x = x;
+	this.y = y;
+	this.add = function add(vector) {
+		return new Vector(this.x + vector.x, this.y + vector.y);
+	};
+	this.sub = function sub(vector) {
+		return new Vector(this.x - vector.x, this.y - vector.y);
+	};
+	this.mul = function sub(num) {
+		return new Vector(this.x * num, this.y * num);
+	};
+	this.dot = function sub(vector) {
+		return this.x * vector.x + this.y * vector.y;
+	};
+	this.abs = function abs() {
+		return Math.sqrt(this.x * this.x + this.y * this.y);
+	}
+	this.normal = function normal() {
+		return new Vector(1, -(this.x / this.y));
 	}
 }
 
 function Thing(position, speed, acceleration, mass) {
-	return {
-		"position": position,
-		"speed": speed,
-		"acceleration": acceleration,
-		"mass": mass
-	}
+	this.position = position;
+	this.speed = speed;
+	this.acceleration = acceleration;
+	this.mass = mass;
 }
 
 function loop(ctx) {
@@ -67,53 +79,41 @@ function loop(ctx) {
 function update() {
 
 	for (var i = 0; i < objects.length; i++) {
-		var force = new Vector(0, 0);
-		for (var j = 0; j < objects.length; j++) {
-			if (objects[i] && objects[j] && i != j) {
-				var m1 = objects[i].mass;
-				var m2 = objects[j].mass;
-				var pos1 = objects[i].position;
-				var pos2 = objects[j].position;
-				var mass1 = objects[i].mass;
-				var mass2 = objects[j].mass;
-				var speed1 = objects[i].speed;
-				var speed2 = objects[j].speed;
-				var distance = pos2.sub(pos1).abs();
 
-				if (distance <= (Math.log(objects[i].mass) + Math.log(objects[j].mass))) {
-					objects[j].position = pos1.add(pos2).mul(0.5);
-					objects[j].speed = speed1.mul(m1/(m1+m2)).add(speed2.mul(m2/(m1+m2)));
-					objects[j].mass = m1 + m2;
-					objects.splice(i, 1);
-				}
-			}
-		}
-	};
-
-	for (var i = 0; i < objects.length; i++) {
 		var force = new Vector(0, 0);
-		for (var j = 0; j < objects.length; j++) {
-			if (i != j) {
-				var pos1 = objects[i].position;
-				var pos2 = objects[j].position;
-				var distance = pos2.sub(pos1).abs();
-				if (distance != 0) {
-					var c = g * objects[j].mass / (distance * distance);
-					force = force.add(pos2.sub(pos1).mul(c));
-				}
-			}
+		var pos = objects[i].position;
+		var distance = attractor.position.sub(pos).abs();
+		if (distance != 0) {
+			var c = g * attractor.mass / (distance * distance);
+			force = force.add(attractor.position.sub(pos).mul(c));
 		}
 		objects[i].acceleration = objects[i].acceleration.add(force);
+		objects[i].speed = objects[i].speed.add(objects[i].acceleration.mul(ticksPerLoop));
+		objects[i].position = objects[i].position.add(objects[i].speed.mul(ticksPerLoop));
 	};
 
 	for (var i = 0; i < objects.length; i++) {
-		objects[i].position = objects[i].position.add(objects[i].speed.mul(ticksPerLoop));
-		objects[i].speed = objects[i].speed.add(objects[i].acceleration.mul(ticksPerLoop));
-	};
+		if (attractor.position.sub(objects[i].position).abs() < 10) {
+			objects.splice(i, 1);
+		}
+	}
+
+	if (objects.length == 0) {
+		setTimeout(function ()  {
+			for(var i = 0; i < 10; i++) {
+				var angle = Math.PI * 2 * Math.random();
+				var distance = 15;
+				var position = center.add(new Vector(distance * Math.cos(angle), distance * Math.sin(angle)));
+				var speed = position.sub(center).mul(3 / position.sub(center).abs());
+				objects.push(new Thing(position, speed, new Vector(0, 0), 2));
+			}
+		}, 1000);
+	}
 }
 
 function render(ctx) {
-	ctx.clearRect(0, 0, 1500, 900);
+	ctx.fillStyle = "black";
+	ctx.fillRect(0, 0, width, height);
 	for(var i = 0; i < objects.length; i++) {
 		circle(ctx, objects[i].position.x, objects[i].position.y, Math.log(objects[i].mass));
 	};
@@ -121,6 +121,7 @@ function render(ctx) {
 
 function circle(ctx, x, y, d) {
 	ctx.beginPath();
+	ctx.fillStyle = "#FFFFFF";
 	ctx.arc(x, y, d, 0, 2 * Math.PI);
-	ctx.stroke();
+	ctx.fill();
 }
