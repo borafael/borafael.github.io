@@ -1,8 +1,9 @@
 var shouldKeepLooping = true;
-var interval = 10;
+var running = true;
+var interval = 0.001;
 var objects = [];
 var g = 0.0000001;
-var ticksPerLoop = 1;
+var ticksPerLoop = 0.1;
 var width = 1500;
 var height = 900;
 var center = new Vector(width / 2, height / 2);
@@ -18,23 +19,22 @@ function start(canvas) {
 	loop(ctx);
 }
 
-function getTangentSpeed(position) {
-	var speed = attractor.position.sub(position).normal();
-
-	if (position.y > center.y) {
-		return speed.mul(-1);
-	} else {
-		return speed;
-	}
-}
-
 function init() {
-	for(var i = 0; i < 10000; i++) {
-		var position = new Vector(Math.floor(Math.random() * width), Math.floor(Math.random() * height));
-		//var speed = getTangentSpeed(position).mul(2 / center.sub(position).abs());
-		var speed = new Vector(0, 0);
+	// for(var i = 0; i < 10000; i++) {
+	// 	var position = new Vector(Math.floor(Math.random() * width), Math.floor(Math.random() * height));
+	// 	//var speed = getTangentSpeed(position).mul(2 / center.sub(position).abs());
+	// 	var speed = new Vector(0, 0);
+	// 	objects.push(new Thing(position, speed, new Vector(0, 0), 2));
+	// }
+
+	for(var i = 0; i < 1000; i++) {
+		var angle = Math.PI * 2 * Math.random();
+		var distance = 3;
+		var position = center.add(new Vector(distance * Math.cos(angle), distance * Math.sin(angle)));
+		var speed = position.sub(center).mul(Math.random() * 7 / position.sub(center).abs());
 		objects.push(new Thing(position, speed, new Vector(0, 0), 2));
 	}
+
 }
 
 function Vector(x, y) {
@@ -68,8 +68,11 @@ function Thing(position, speed, acceleration, mass) {
 }
 
 function loop(ctx) {
-	update();
-	render(ctx);
+
+	if (running) {
+		update();
+		render(ctx);
+	}
 
 	if (shouldKeepLooping) {
 		setTimeout(function(){ loop(ctx); }, interval);
@@ -93,20 +96,16 @@ function update() {
 	};
 
 	for (var i = 0; i < objects.length; i++) {
-		if (attractor.position.sub(objects[i].position).abs() < 10) {
+		if (attractor.position.sub(objects[i].position).abs() < 3) {
 			objects.splice(i, 1);
 		}
 	}
 
 	if (objects.length == 0) {
+		running = false;
 		setTimeout(function ()  {
-			for(var i = 0; i < 10; i++) {
-				var angle = Math.PI * 2 * Math.random();
-				var distance = 15;
-				var position = center.add(new Vector(distance * Math.cos(angle), distance * Math.sin(angle)));
-				var speed = position.sub(center).mul(3 / position.sub(center).abs());
-				objects.push(new Thing(position, speed, new Vector(0, 0), 2));
-			}
+			init();
+			running = true;
 		}, 1000);
 	}
 }
