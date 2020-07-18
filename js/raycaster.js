@@ -62,6 +62,7 @@ function loop() {
 }
 
 function update() {
+	var newPos;
 
 	if (RAYCASTER.rightPressed) {
 		RAYCASTER.angle = RAYCASTER.angle + Math.PI / 100;
@@ -72,13 +73,21 @@ function update() {
 	}
 
 	if (RAYCASTER.upPressed) {
-		RAYCASTER.pos = RAYCASTER.pos.add(new Vector(1 * Math.cos(RAYCASTER.angle),
+		newPos = RAYCASTER.pos.add(new Vector(1 * Math.cos(RAYCASTER.angle),
 			1 * Math.sin(RAYCASTER.angle)));
+
+		if (isInsideMap(newPos) && isHollow(newPos)) {
+			RAYCASTER.pos = newPos;
+		}
 	}
 
 	if (RAYCASTER.downPressed) {
-		RAYCASTER.pos = RAYCASTER.pos.sub(new Vector(1 * Math.cos(RAYCASTER.angle),
+		newPos = RAYCASTER.pos.sub(new Vector(1 * Math.cos(RAYCASTER.angle),
 			1 * Math.sin(RAYCASTER.angle)));
+
+		if (isInsideMap(newPos) && isHollow(newPos)) {
+			RAYCASTER.pos = newPos;
+		}
 	}
 }
 
@@ -156,7 +165,7 @@ function renderViewPort() {
 		var colorComponent = Math.floor((1 - (distance / maxDistance)) * 255.0).toString(
 				16)
 			.padStart(2, '0');
-		var color = '#' + colorComponent + colorComponent + colorComponent;
+		var color = '#' + colorComponent + '0000';
 
 		ctx.strokeStyle = color;
 		ctx.moveTo(column, viewPort.height / 2 + projection / 2);
@@ -177,8 +186,7 @@ function getRandomColor() {
 function cast(angle) {
 	var aux = new Vector(RAYCASTER.pos.x, RAYCASTER.pos.y);
 
-	while (aux.x >= 0 && aux.x <= RAYCASTER.miniMap.width && aux.y >= 0 && aux.y <=
-		RAYCASTER.miniMap.height && isHollow(aux)) {
+	while (isInsideMap(aux) && isHollow(aux)) {
 		aux = aux.add(new Vector(Math.cos(angle), Math.sin(angle)));
 	}
 
@@ -191,6 +199,11 @@ function cast(angle) {
 	ctx.stroke();
 
 	return aux.sub(RAYCASTER.pos).abs();
+}
+
+function isInsideMap(pos) {
+	return pos.x >= 0 && pos.x <= RAYCASTER.miniMap.width &&
+		pos.y >= 0 && pos.y <= RAYCASTER.miniMap.height
 }
 
 function isHollow(pos) {
