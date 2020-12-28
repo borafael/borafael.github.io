@@ -44,6 +44,12 @@ function Player(id, name) {
 	this.speed = ZERO;
 	this.acceleration = ZERO;
 	this.active = false;
+	this.hit = function(player) {
+		let direction = player.pos.sub(this.pos)
+		direction = direction.mul(1 / direction.abs());
+		player.pos = this.pos.add(direction.mul((RADIUS * 2) + 1));
+		player.acceleration = direction;
+	}
 }
 
 function Vector(x, y) {
@@ -93,7 +99,7 @@ function placePlayer(id, pos, color) {
 }
 
 function getRandomColor() {
-	return '#' + Math.floor(Math.random()*16777215).toString(16);
+	return '#' + Math.floor(Math.random() * 16777215).toString(16);
 }
 
 function getCanvas() {
@@ -113,10 +119,7 @@ function start() {
 }
 
 function loop() {
-	Object.values(PLAYERS)
-		.filter(p => p.active)
-		.map(p => update(p));
-
+	getActivePlayers().map(p => update(p));
 	render();
 
 	if (state === 1) {
@@ -128,22 +131,23 @@ function update(player) {
 	let closestPlayer = getClosestPlayer(player);
 
 	if (inContact(player, closestPlayer)) {
-		console.info(player.name + ' le pego a ' + closestPlayer.name);
-		let direction = closestPlayer.pos.sub(player.pos);
-		closestPlayer.acceleration = direction;
-		closestPlayer.pos = player.pos.add(direction.mul(((RADIUS * 2) + 1) / direction.abs()));
+		player.hit(closestPlayer);
 	} else {
-		let newPos = player.pos.add(player.speed.mul(LAPSE));
-
-		if (isWithinBoundries(newPos) && !collides(player, newPos)) {
-			player.pos = newPos;
-			player.speed = player.speed.add(player.acceleration.mul(LAPSE));
-		} else {
-			player.speed = ZERO;
-		}
-
-		player.acceleration = closestPlayer.pos.sub(player.pos);
+		updatePosition(player, closestPlayer.pos.sub(player.pos));
 	}
+}
+
+function updatePosition(player, acceleration) {
+	let newPos = player.pos.add(player.speed.mul(LAPSE));
+
+	if (isWithinBoundries(newPos) && !collides(player, newPos)) {
+		player.pos = newPos;
+		player.speed = player.speed.add(player.acceleration.mul(LAPSE));
+	} else {
+		player.speed = ZERO;
+	}
+
+	player.acceleration = acceleration;
 }
 
 function inContact(player1, player2) {
@@ -158,33 +162,32 @@ function isWithinBoundries(pos) {
 }
 
 function collides(player, newPos) {
-	return Object.values(PLAYERS)
+	return getActivePlayers()
 		.filter(p => p !== player)
 		.filter(p => p.pos.sub(newPos).abs() <= RADIUS * 2)
 		.length > 0;
 }
 
 function getClosestPlayer(player) {
-	let closestPlayerId = Object.values(PLAYERS)
+	return getActivePlayers()
 		.filter(p => p !== player)
-		.map(p => {
-			return {
-				'id': p.id,
-				'distance': p.pos.sub(player.pos).abs()
-			}
-		})
 		.sort(function (p1, p2) {
-			return p1['distance'] - p2['distance'];
-		})[0].id;
-
-	return PLAYERS[closestPlayerId];
+			let d1 = p1.pos.sub(player.pos).abs();
+			let d2 = p2.pos.sub(player.pos).abs();
+			return d1 - d2;
+		})[0];
 }
 
 function render() {
 	let canvas = getCanvas();
 	let ctx = canvas.getContext('2d');
 	clear(ctx);
-	Object.values(PLAYERS).map(player => renderPlayer(ctx, player));
+	getActivePlayers().map(player => renderPlayer(ctx, player));
+}
+
+function getActivePlayers() {
+	return Object.values(PLAYERS)
+		.filter(p => p.active);
 }
 
 function clear(ctx) {
