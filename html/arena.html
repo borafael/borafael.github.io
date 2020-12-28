@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Fun with canvas</title>
+    <script src="../js/arena.js"></script>
+  </head>
+  <body>
+    <div id="playersDiv" style="border:1px solid #000000; float:left;"></div>
+    <div align="center">
+      <canvas id="arenaCanvas" width="800" height="600" style="border:1px solid #000000;" ondrop="drop(event)" ondragover="event.preventDefault();"></canvas>
+    </div>
+    <div align="center">
+      <button onclick="start();">Bataia</button>
+    </div>
+    <script>
+      let playersDiv = document.getElementById('playersDiv');
+      Object.values(PLAYERS).forEach(player => {
+        let newPlayerDiv = document.createElement('div');
+        newPlayerDiv.id = player.id;
+        newPlayerDiv.style.border = '1px solid #000000';
+        newPlayerDiv.draggable = true;
+        newPlayerDiv.ondragstart = drag;
+        newPlayerDiv.innerHTML = player.name;
+        playersDiv.append(newPlayerDiv);
+      });
+    </script>
+  </body>
+</html>
