@@ -6,6 +6,8 @@ const RADIUS = 10;
 const LAPSE = 0.001;
 const ZERO = new Vector(0, 0);
 const DELTA = 0.0001;
+const FORCE = 10;
+const CENTER = new Vector(WIDTH / 2, HEIGHT / 2);
 
 const PLAYERS = {
 	0: new Player(0, 'Vieira'),
@@ -30,11 +32,6 @@ const PLAYERS = {
 	19: new Player(19, 'Eddie')
 }
 
-function State(update, hit) {
-	this.update = update;
-	this.hit = hit;
-}
-
 const ATTACKING = new State(
 	function (player) {
 			let closestPlayer = getClosestPlayer(player);
@@ -55,7 +52,7 @@ const ATTACKING = new State(
 				hitee.counter = 0;
 			}
 
-			hitee.acceleration = hitee.pos.sub(hitter.pos).mul(5);
+			hitee.acceleration = hitee.pos.sub(hitter.pos).mul(FORCE);
 		});
 
 const STUNNED = new State(
@@ -74,7 +71,7 @@ const STUNNED = new State(
 		} else {
 		}
 
-		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(5);
+		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(FORCE);
 	});
 
 const DEAD = new State(
@@ -82,7 +79,7 @@ const DEAD = new State(
 		updatePosition(player, player.acceleration);
 	},
 	function(hitter, hitee) {
-		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(5);
+		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(FORCE);
 	});
 
 // Variables
@@ -90,6 +87,10 @@ const DEAD = new State(
 let state = 0;
 
 // Classes
+function State(update, hit) {
+	this.update = update;
+	this.hit = hit;
+}
 
 function Player(id, name) {
 	this.id = id;
@@ -144,7 +145,7 @@ function drop(event) {
 	let color = getRandomColor();
 	element.style.backgroundColor = color;
 	element.draggable = false;
-	placePlayer(id, getCanvasCoordinates(getCanvas(), event), color, ATTACKING);
+	placePlayer(id, getCanvasCoordinates(getCanvas(), event.clientX, event.clientY), color, ATTACKING);
 	render();
 }
 
@@ -164,11 +165,9 @@ function getCanvas() {
 	return document.getElementById('arenaCanvas');
 }
 
-function getCanvasCoordinates(canvas, event) {
+function getCanvasCoordinates(canvas, x, y) {
 	const rect = canvas.getBoundingClientRect()
-	const x = event.clientX - rect.left
-	const y = event.clientY - rect.top
-	return new Vector(x, y);
+	return new Vector(x - rect.left, y - rect.top);
 }
 
 function start() {
@@ -210,11 +209,15 @@ function isWithinBoundries(pos) {
 }
 
 function collides(player, newPos) {
-	return getActivePlayers()
-		.filter(p => p !== player)
-		.filter(p => p.state !== DEAD)
-		.filter(p => p.pos.sub(newPos).abs() <= RADIUS * 2)
-		.length > 0;
+	if (player.state === DEAD) {
+		return false;
+	} else {
+		return getActivePlayers()
+			.filter(p => p !== player)
+			.filter(p => p.state !== DEAD)
+			.filter(p => p.pos.sub(newPos).abs() <= RADIUS * 2)
+			.length > 0;
+	}
 }
 
 function getClosestPlayer(player) {
@@ -250,6 +253,10 @@ function renderPlayer(ctx, player) {
 	ctx.fillStyle = player.color;
 	ctx.arc(player.pos.x, player.pos.y, RADIUS, 0, 2 * Math.PI);
 	ctx.fill();
+
+	let offset = getCanvasCoordinates(getCanvas(), CENTER.x, CENTER.y).sub(player.pos);
+	offset = offset.mul(RADIUS / offset.abs());
+	offset = player.pos.add(offset);
 	ctx.fillStyle = 'black';
-	ctx.fillText(player.name, player.pos.x + RADIUS, player.pos.y - RADIUS);
+	ctx.fillText(player.name + (player.state === DEAD ? ' X-(' : ''), offset.x, offset.y);
 }
