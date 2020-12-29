@@ -254,7 +254,7 @@ function renderPlayer(ctx, player) {
 	ctx.arc(player.pos.x, player.pos.y, RADIUS, 0, 2 * Math.PI);
 	ctx.fill();
 
-	let offset = getCanvasCoordinates(getCanvas(), CENTER.x, CENTER.y).sub(player.pos);
+	let offset = CENTER.sub(player.pos);
 	offset = offset.mul(RADIUS / offset.abs());
 	offset = player.pos.add(offset);
 	ctx.fillStyle = 'black';
