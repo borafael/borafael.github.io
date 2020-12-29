@@ -55,7 +55,7 @@ const ATTACKING = new State(
 				hitee.counter = 0;
 			}
 
-			hitee.acceleration = hitee.pos.sub(hitter.pos).mul(10);
+			hitee.acceleration = hitee.pos.sub(hitter.pos).mul(5);
 		});
 
 const STUNNED = new State(
@@ -74,7 +74,7 @@ const STUNNED = new State(
 		} else {
 		}
 
-		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(10);
+		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(5);
 	});
 
 const DEAD = new State(
@@ -82,7 +82,7 @@ const DEAD = new State(
 		updatePosition(player, player.acceleration);
 	},
 	function(hitter, hitee) {
-		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(10);
+		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(5);
 	});
 
 // Variables
@@ -250,4 +250,6 @@ function renderPlayer(ctx, player) {
 	ctx.fillStyle = player.color;
 	ctx.arc(player.pos.x, player.pos.y, RADIUS, 0, 2 * Math.PI);
 	ctx.fill();
+	ctx.fillStyle = 'black';
+	ctx.fillText(player.name, player.pos.x + RADIUS, player.pos.y - RADIUS);
 }
