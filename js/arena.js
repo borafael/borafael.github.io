@@ -3,7 +3,7 @@
 const WIDTH = 800;
 const HEIGHT = 600;
 const RADIUS = 10;
-const LAPSE = 0.0001;
+const LAPSE = 0.001;
 const ZERO = new Vector(0, 0);
 const DELTA = 0.0001;
 
@@ -30,6 +30,61 @@ const PLAYERS = {
 	19: new Player(19, 'Eddie')
 }
 
+function State(update, hit) {
+	this.update = update;
+	this.hit = hit;
+}
+
+const ATTACKING = new State(
+	function (player) {
+			let closestPlayer = getClosestPlayer(player);
+
+			if (inContact(player, closestPlayer)) {
+				player.hit(closestPlayer);
+			} else {
+				updatePosition(player, closestPlayer.pos.sub(player.pos));
+			}
+		},
+	function(hitter, hitee) {
+			hitee.health--;
+
+			if (hitee.health < 1) {
+				hitee.state = DEAD;
+			} else {
+				hitee.state = STUNNED;
+				hitee.counter = 0;
+			}
+
+			hitee.acceleration = hitee.pos.sub(hitter.pos).mul(10);
+		});
+
+const STUNNED = new State(
+	function (player) {
+		updatePosition(player, player.acceleration);
+		player.counter++;
+		if (player.counter > 500) {
+			player.state = ATTACKING;
+		}
+	},
+	function(hitter, hitee) {
+		hitee.health--;
+
+		if (hitee.health < 1) {
+			hitee.state = DEAD;
+		} else {
+		}
+
+		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(10);
+	});
+
+const DEAD = new State(
+	function (player) {
+		updatePosition(player, player.acceleration);
+	},
+	function(hitter, hitee) {
+		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(10);
+	});
+
 // Variables
 
 let state = 0;
@@ -44,11 +99,13 @@ function Player(id, name) {
 	this.speed = ZERO;
 	this.acceleration = ZERO;
 	this.active = false;
+	this.counter = 0;
+	this.health = 100;
+	this.update = function(player) {
+		this.state.update(player);
+	}
 	this.hit = function(player) {
-		let direction = player.pos.sub(this.pos)
-		direction = direction.mul(1 / direction.abs());
-		player.pos = this.pos.add(direction.mul((RADIUS * 2) + 1));
-		player.acceleration = direction;
+		this.state.hit(this, player);
 	}
 }
 
@@ -87,15 +144,16 @@ function drop(event) {
 	let color = getRandomColor();
 	element.style.backgroundColor = color;
 	element.draggable = false;
-	placePlayer(id, getCanvasCoordinates(getCanvas(), event), color);
+	placePlayer(id, getCanvasCoordinates(getCanvas(), event), color, ATTACKING);
 	render();
 }
 
-function placePlayer(id, pos, color) {
+function placePlayer(id, pos, color, state) {
 	let player = PLAYERS[id];
 	player.pos = pos;
 	player.color = color;
 	player.active = true;
+	player.state = state;
 }
 
 function getRandomColor() {
@@ -119,21 +177,11 @@ function start() {
 }
 
 function loop() {
-	getActivePlayers().map(p => update(p));
+	getActivePlayers().map(p => p.state.update(p));
 	render();
 
 	if (state === 1) {
 		setInterval(loop, 1);
-	}
-}
-
-function update(player) {
-	let closestPlayer = getClosestPlayer(player);
-
-	if (inContact(player, closestPlayer)) {
-		player.hit(closestPlayer);
-	} else {
-		updatePosition(player, closestPlayer.pos.sub(player.pos));
 	}
 }
 
@@ -164,6 +212,7 @@ function isWithinBoundries(pos) {
 function collides(player, newPos) {
 	return getActivePlayers()
 		.filter(p => p !== player)
+		.filter(p => p.state !== DEAD)
 		.filter(p => p.pos.sub(newPos).abs() <= RADIUS * 2)
 		.length > 0;
 }
@@ -171,6 +220,7 @@ function collides(player, newPos) {
 function getClosestPlayer(player) {
 	return getActivePlayers()
 		.filter(p => p !== player)
+		.filter(p => p.state !== DEAD)
 		.sort(function (p1, p2) {
 			let d1 = p1.pos.sub(player.pos).abs();
 			let d2 = p2.pos.sub(player.pos).abs();
