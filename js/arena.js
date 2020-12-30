@@ -8,7 +8,7 @@ const ZERO = new Vector(0, 0);
 const DELTA = 0.001;
 const CENTER = new Vector(WIDTH / 2, HEIGHT / 2);
 const MAX_HEALTH = 100;
-const TIME = 10;
+const INTERVAL = 1;
 
 const PLAYERS = {
 	0: new Player(0, 'Vieira', 100, 10),
@@ -97,6 +97,7 @@ const DEAD = new State(
 // Variables
 
 let state = 0;
+let timerId = -1;
 
 // Classes
 function State(update, hit, getBubbleText) {
@@ -193,16 +194,12 @@ function getCanvasCoordinates(canvas, x, y) {
 
 function start() {
 	state = 1;
-	loop();
+	timerId = setInterval(loop, INTERVAL);
 }
 
 function loop() {
 	getActivePlayers().forEach(p => p.update());
 	render();
-
-	if (state === 1) {
-		setInterval(loop, TIME);
-	}
 }
 
 function updatePosition(player, acceleration) {
