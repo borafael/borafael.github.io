@@ -5,41 +5,44 @@ const HEIGHT = 600;
 const RADIUS = 10;
 const LAPSE = 0.001;
 const ZERO = new Vector(0, 0);
-const DELTA = 0.0001;
-const FORCE = 10;
+const DELTA = 0.001;
 const CENTER = new Vector(WIDTH / 2, HEIGHT / 2);
+const MAX_HEALTH = 100;
+const TIME = 10;
 
 const PLAYERS = {
-	0: new Player(0, 'Vieira'),
-	1: new Player(1, 'El Tío'),
-	2: new Player(2, 'Sergini'),
-	3: new Player(3, 'Grido'),
-	4: new Player(4, 'Rafa'),
-	5: new Player(5, 'Piotr'),
-	6: new Player(6, 'Mausy'),
-	7: new Player(7, 'Arielaki'),
-	8: new Player(8, 'GREgO'),
-	9: new Player(9, 'Dieguito'),
-	10: new Player(10, 'Lucardo'),
-	11: new Player(11, 'Negra'),
-	12: new Player(12, 'Manu'),
-	13: new Player(13, 'Cristo'),
-	14: new Player(14, 'Mauricio'),
-	15: new Player(15, 'Axel'),
-	16: new Player(16, 'Wences'),
-	17: new Player(17, 'Pablito'),
-	18: new Player(18, 'Leander'),
-	19: new Player(19, 'Eddie')
+	0: new Player(0, 'Vieira', 100, 10),
+	1: new Player(1, 'El Tío', 10, 10),
+	2: new Player(2, 'Sergini', 10, 10),
+	3: new Player(3, 'Grido', 10, 10),
+	4: new Player(4, 'Rafa', 10, 10),
+	5: new Player(5, 'Piotr', 10, 10),
+	6: new Player(6, 'Mausy', 10, 10),
+	7: new Player(7, 'Arielaki', 10, 10),
+	8: new Player(8, 'GREgO', 10, 10),
+	9: new Player(9, 'Dieguito', 10, 10),
+	10: new Player(10, 'Lucardo', 10, 10),
+	11: new Player(11, 'Negra', 10, 10),
+	12: new Player(12, 'Manu', 10, 10),
+	13: new Player(13, 'Cristo', 10, 10),
+	14: new Player(14, 'Mauricio', 10, 10),
+	15: new Player(15, 'Axel', 10, 10),
+	16: new Player(16, 'Wences', 10, 10),
+	17: new Player(17, 'Pablito', 10, 10),
+	18: new Player(18, 'Leander', 10, 10),
+	19: new Player(19, 'Eddie', 10, 10)
 }
 
 const ATTACKING = new State(
 	function (player) {
 			let closestPlayer = getClosestPlayer(player);
 
-			if (inContact(player, closestPlayer)) {
-				player.hit(closestPlayer);
-			} else {
-				updatePosition(player, closestPlayer.pos.sub(player.pos));
+			if (closestPlayer) {
+				if (inContact(player, closestPlayer)) {
+					player.hit(closestPlayer);
+				} else {
+					updatePosition(player, closestPlayer.pos.sub(player.pos));
+				}
 			}
 		},
 	function(hitter, hitee) {
@@ -52,8 +55,11 @@ const ATTACKING = new State(
 				hitee.counter = 0;
 			}
 
-			hitee.acceleration = hitee.pos.sub(hitter.pos).mul(FORCE);
-		});
+			hitee.acceleration = hitee.pos.sub(hitter.pos).mul(hitter.force / hitee.mass);
+		},
+	function(player) {
+		return player.name;
+	});
 
 const STUNNED = new State(
 	function (player) {
@@ -68,18 +74,24 @@ const STUNNED = new State(
 
 		if (hitee.health < 1) {
 			hitee.state = DEAD;
-		} else {
 		}
 
-		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(FORCE);
+		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(hitter.force / hitee.mass);
+	},
+	function(player) {
+		return player.name;
 	});
 
 const DEAD = new State(
 	function (player) {
-		updatePosition(player, player.acceleration);
+		player.acceleration = ZERO;
+		player.speed = ZERO
 	},
 	function(hitter, hitee) {
-		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(FORCE);
+		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(hitter.force / hitee.mass);
+	},
+	function(player) {
+		return player.name;
 	});
 
 // Variables
@@ -87,26 +99,37 @@ const DEAD = new State(
 let state = 0;
 
 // Classes
-function State(update, hit) {
+function State(update, hit, getBubbleText) {
 	this.update = update;
 	this.hit = hit;
+	this.getBubbleText = getBubbleText;
 }
 
-function Player(id, name) {
+function Player(id, name, force, mass) {
 	this.id = id;
 	this.name = name;
 	this.pos = ZERO;
-	this.color = '#FFFFFF';
 	this.speed = ZERO;
 	this.acceleration = ZERO;
 	this.active = false;
 	this.counter = 0;
-	this.health = 100;
-	this.update = function(player) {
-		this.state.update(player);
+	this.health = MAX_HEALTH;
+	this.force = force;
+	this.mass = mass;
+	this.state = null;
+	this.update = function() {
+		this.state.update(this);
 	}
 	this.hit = function(player) {
 		this.state.hit(this, player);
+	}
+	this.getBubbleText = function() {
+		return this.state.getBubbleText(this);
+	}
+	this.getColor = function() {
+		let red = this.health >= MAX_HEALTH / 2 ? 510 - Math.floor(510 * this.health / MAX_HEALTH) : 255;
+		let green = this.health < MAX_HEALTH / 2 ? Math.floor(510 * this.health / MAX_HEALTH) : 255;
+		return '#' + red.toString(16).padStart(2, '0') + green.toString(16).padStart(2, '0') + '00';
 	}
 }
 
@@ -142,23 +165,21 @@ function drag(event) {
 function drop(event) {
 	let id = event.dataTransfer.getData('text');
 	let element = document.getElementById(id);
-	let color = getRandomColor();
-	element.style.backgroundColor = color;
+	updatePlayerColor(id, PLAYERS[id].getColor());
 	element.draggable = false;
-	placePlayer(id, getCanvasCoordinates(getCanvas(), event.clientX, event.clientY), color, ATTACKING);
+	placePlayer(id, getCanvasCoordinates(getCanvas(), event.clientX, event.clientY), ATTACKING);
 	render();
 }
 
-function placePlayer(id, pos, color, state) {
-	let player = PLAYERS[id];
-	player.pos = pos;
-	player.color = color;
-	player.active = true;
-	player.state = state;
+function updatePlayerColor(id, color) {
+	document.getElementById(id).style.backgroundColor = color;
 }
 
-function getRandomColor() {
-	return '#' + Math.floor(Math.random() * 16777215).toString(16);
+function placePlayer(id, pos, state) {
+	let player = PLAYERS[id];
+	player.pos = pos;
+	player.active = true;
+	player.state = state;
 }
 
 function getCanvas() {
@@ -176,11 +197,11 @@ function start() {
 }
 
 function loop() {
-	getActivePlayers().map(p => p.state.update(p));
+	getActivePlayers().forEach(p => p.update());
 	render();
 
 	if (state === 1) {
-		setInterval(loop, 1);
+		setInterval(loop, TIME);
 	}
 }
 
@@ -249,8 +270,10 @@ function clear(ctx) {
 }
 
 function renderPlayer(ctx, player) {
+	let color = player.getColor();
+	updatePlayerColor(player.id, color);
 	ctx.beginPath();
-	ctx.fillStyle = player.color;
+	ctx.fillStyle = color;
 	ctx.arc(player.pos.x, player.pos.y, RADIUS, 0, 2 * Math.PI);
 	ctx.fill();
 
@@ -258,5 +281,5 @@ function renderPlayer(ctx, player) {
 	offset = offset.mul(RADIUS / offset.abs());
 	offset = player.pos.add(offset);
 	ctx.fillStyle = 'black';
-	ctx.fillText(player.name + (player.state === DEAD ? ' X-(' : ''), offset.x, offset.y);
+	ctx.fillText(player.getBubbleText(), offset.x, offset.y);
 }
