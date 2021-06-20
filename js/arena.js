@@ -1,11 +1,13 @@
 // Constants
 
+var TEST = {};
+
 const WIDTH = 800;
 const HEIGHT = 600;
 const RADIUS = 10;
 const LAPSE = 0.001;
 const ZERO = new Vector(0, 0);
-const DELTA = 0.001;
+const DELTA = 0.0001;
 const CENTER = new Vector(WIDTH / 2, HEIGHT / 2);
 const MAX_HEALTH = 100;
 const INTERVAL = 1;
@@ -34,35 +36,35 @@ const PLAYERS = {
 }
 
 const ATTACKING = new State(
-	function (player) {
-			let closestPlayer = getClosestPlayer(player);
+	function(player) {
+		let closestPlayer = getClosestPlayer(player);
 
-			if (closestPlayer) {
-				if (inContact(player, closestPlayer)) {
-					player.hit(closestPlayer);
-				} else {
-					updatePosition(player, closestPlayer.pos.sub(player.pos));
-				}
-			}
-		},
-	function(hitter, hitee) {
-			hitee.health--;
-
-			if (hitee.health < 1) {
-				hitee.state = DEAD;
+		if (closestPlayer) {
+			if (inContact(player, closestPlayer)) {
+				player.hit(closestPlayer);
 			} else {
-				hitee.state = STUNNED;
-				hitee.counter = 0;
+				updatePosition(player, closestPlayer.pos.sub(player.pos));
 			}
+		}
+	},
+	function(hitter, hitee) {
+		hitee.health--;
 
-			hitee.acceleration = hitee.pos.sub(hitter.pos).mul(hitter.force / hitee.mass);
-		},
+		if (hitee.health < 1) {
+			hitee.state = DEAD;
+		} else {
+			hitee.state = STUNNED;
+			hitee.counter = 0;
+		}
+
+		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(hitter.force / hitee.mass);
+	},
 	function(player) {
 		return player.name;
 	});
 
 const STUNNED = new State(
-	function (player) {
+	function(player) {
 		updatePosition(player, player.acceleration);
 		player.counter++;
 		if (player.counter > 500) {
@@ -83,7 +85,7 @@ const STUNNED = new State(
 	});
 
 const DEAD = new State(
-	function (player) {
+	function(player) {
 		player.acceleration = ZERO;
 		player.speed = ZERO
 	},
@@ -128,31 +130,34 @@ function Player(id, name, force, mass) {
 		return this.state.getBubbleText(this);
 	}
 	this.getColor = function() {
-		let red = this.health >= MAX_HEALTH / 2 ? 510 - Math.floor(510 * this.health / MAX_HEALTH) : 255;
-		let green = this.health < MAX_HEALTH / 2 ? Math.floor(510 * this.health / MAX_HEALTH) : 255;
-		return '#' + red.toString(16).padStart(2, '0') + green.toString(16).padStart(2, '0') + '00';
+		let red = this.health >= MAX_HEALTH / 2 ? 510 - Math.floor(510 * this.health /
+			MAX_HEALTH) : 255;
+		let green = this.health < MAX_HEALTH / 2 ? Math.floor(510 * this.health /
+			MAX_HEALTH) : 255;
+		return '#' + red.toString(16).padStart(2, '0') + green.toString(16).padStart(
+			2, '0') + '00';
 	}
 }
 
 function Vector(x, y) {
 	this.x = x;
 	this.y = y;
-	this.add = function (vector) {
+	this.add = function(vector) {
 		return new Vector(this.x + vector.x, this.y + vector.y);
 	};
-	this.sub = function (vector) {
+	this.sub = function(vector) {
 		return new Vector(this.x - vector.x, this.y - vector.y);
 	};
-	this.mul = function (num) {
+	this.mul = function(num) {
 		return new Vector(this.x * num, this.y * num);
 	};
-	this.dot = function (vector) {
+	this.dot = function(vector) {
 		return this.x * vector.x + this.y * vector.y;
 	};
-	this.abs = function () {
+	this.abs = function() {
 		return Math.sqrt(this.x * this.x + this.y * this.y);
 	}
-	this.normal = function () {
+	this.normal = function() {
 		return new Vector(1, -(this.x / this.y));
 	}
 }
@@ -168,7 +173,8 @@ function drop(event) {
 	let element = document.getElementById(id);
 	updatePlayerColor(id, PLAYERS[id].getColor());
 	element.draggable = false;
-	placePlayer(id, getCanvasCoordinates(getCanvas(), event.clientX, event.clientY), ATTACKING);
+	placePlayer(id, getCanvasCoordinates(getCanvas(), event.clientX, event.clientY),
+		ATTACKING);
 	render();
 }
 
@@ -220,10 +226,8 @@ function inContact(player1, player2) {
 }
 
 function isWithinBoundries(pos) {
-	return pos.x >= RADIUS
-		&& pos.x <= WIDTH - RADIUS
-		&& pos.y >= RADIUS
-		&& pos.y <= HEIGHT - RADIUS;
+	return pos.x >= RADIUS && pos.x <= WIDTH - RADIUS && pos.y >= RADIUS && pos.y <=
+		HEIGHT - RADIUS;
 }
 
 function collides(player, newPos) {
@@ -242,7 +246,7 @@ function getClosestPlayer(player) {
 	return getActivePlayers()
 		.filter(p => p !== player)
 		.filter(p => p.state !== DEAD)
-		.sort(function (p1, p2) {
+		.sort(function(p1, p2) {
 			let d1 = p1.pos.sub(player.pos).abs();
 			let d2 = p2.pos.sub(player.pos).abs();
 			return d1 - d2;
