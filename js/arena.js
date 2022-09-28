@@ -1,13 +1,11 @@
 // Constants
 
-var TEST = {};
-
 const WIDTH = 800;
-const HEIGHT = 600;
+const HEIGHT = 800;
 const RADIUS = 10;
-const LAPSE = 0.001;
+const LAPSE = 0.005;
 const ZERO = new Vector(0, 0);
-const DELTA = 0.0001;
+const DELTA = 0.001;
 const CENTER = new Vector(WIDTH / 2, HEIGHT / 2);
 const MAX_HEALTH = 100;
 const INTERVAL = 1;
@@ -36,62 +34,69 @@ const PLAYERS = {
 }
 
 const ATTACKING = new State(
+	'attacking',
 	function(player) {
 		let closestPlayer = getClosestPlayer(player);
-
 		if (closestPlayer) {
+
 			if (inContact(player, closestPlayer)) {
 				player.hit(closestPlayer);
 			} else {
-				updatePosition(player, closestPlayer.pos.sub(player.pos));
+				player.acceleration = closestPlayer.pos.sub(player.pos);
+				updatePosition(player);
 			}
 		}
 	},
 	function(hitter, hitee) {
 		hitee.health--;
 
+		newPos = hitee.pos.add(hitee.pos.sub(hitter.pos).mul(0.1));
+		if (isWithinBoundries(newPos)) {
+			hitee.pos = newPos;
+		}
+		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(20 * hitter.force / hitee.mass);
+
 		if (hitee.health < 1) {
-			hitee.state = DEAD;
+			hitee.setState(DEAD);
+			console.log(hitter.name + ' mató ' + hitee.name);
 		} else {
-			hitee.state = STUNNED;
+			console.log(hitter.name + ' golpea a  ' + hitee.name);
+			hitee.setState(STUNNED);
 			hitee.counter = 0;
 		}
-
-		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(hitter.force / hitee.mass);
 	},
 	function(player) {
 		return player.name;
 	});
 
 const STUNNED = new State(
+	'stunned',
 	function(player) {
-		updatePosition(player, player.acceleration);
+		updatePosition(player);
 		player.counter++;
+
+		if (player.counter > 1) {
+				player.acceleration = player.acceleration.mul(-1);
+		}
+
 		if (player.counter > 500) {
-			player.state = ATTACKING;
+			player.setState(ATTACKING);
+			player.acceleration = ZERO;
+			player.speed = ZERO;
 		}
 	},
-	function(hitter, hitee) {
-		hitee.health--;
-
-		if (hitee.health < 1) {
-			hitee.state = DEAD;
-		}
-
-		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(hitter.force / hitee.mass);
-	},
+	function(hitter, hitee) {},
 	function(player) {
 		return player.name;
 	});
 
 const DEAD = new State(
+	'dead',
 	function(player) {
 		player.acceleration = ZERO;
-		player.speed = ZERO
+		updatePosition(player);
 	},
-	function(hitter, hitee) {
-		hitee.acceleration = hitee.pos.sub(hitter.pos).mul(hitter.force / hitee.mass);
-	},
+	function(hitter, hitee) {},
 	function(player) {
 		return player.name;
 	});
@@ -102,7 +107,8 @@ let state = 0;
 let timerId = -1;
 
 // Classes
-function State(update, hit, getBubbleText) {
+function State(name, update, hit, getBubbleText) {
+	this.name = name;
 	this.update = update;
 	this.hit = hit;
 	this.getBubbleText = getBubbleText;
@@ -136,6 +142,9 @@ function Player(id, name, force, mass) {
 			MAX_HEALTH) : 255;
 		return '#' + red.toString(16).padStart(2, '0') + green.toString(16).padStart(
 			2, '0') + '00';
+	},
+	this.setState = function(state) {
+		this.state = state;
 	}
 }
 
@@ -171,22 +180,23 @@ function drag(event) {
 function drop(event) {
 	let id = event.dataTransfer.getData('text');
 	let element = document.getElementById(id);
-	updatePlayerColor(id, PLAYERS[id].getColor());
+	updatePlayerInfo(PLAYERS[id]);
 	element.draggable = false;
-	placePlayer(id, getCanvasCoordinates(getCanvas(), event.clientX, event.clientY),
-		ATTACKING);
+	placePlayer(id, getCanvasCoordinates(getCanvas(), event.clientX, event.clientY), ATTACKING);
 	render();
 }
 
-function updatePlayerColor(id, color) {
-	document.getElementById(id).style.backgroundColor = color;
+function updatePlayerInfo(player) {
+	let id = player.id;
+	document.getElementById(id).style.backgroundColor = player.getColor();
+	document.getElementById(id).innerHTML = player.name + ' (' + player.health + ')';
 }
 
 function placePlayer(id, pos, state) {
 	let player = PLAYERS[id];
 	player.pos = pos;
 	player.active = true;
-	player.state = state;
+	player.setState(state);
 }
 
 function getCanvas() {
@@ -194,13 +204,37 @@ function getCanvas() {
 }
 
 function getCanvasCoordinates(canvas, x, y) {
-	const rect = canvas.getBoundingClientRect()
+	const rect = canvas.getBoundingClientRect();
 	return new Vector(x - rect.left, y - rect.top);
 }
 
 function start() {
 	state = 1;
 	timerId = setInterval(loop, INTERVAL);
+	console.log('Bataia!');
+}
+
+function placeAllPlayersRandomly() {
+	var canvas = getCanvas();
+	var canvasRect = getCanvas().getBoundingClientRect();
+	var minX = canvasRect.left + RADIUS * 2;
+	var maxX = minX + canvas.width - RADIUS * 2;
+	var minY = canvasRect.top + RADIUS * 2;
+	var maxY = minY +  canvas.height - RADIUS * 2;
+	f = function(player) {
+		event = new Object();
+		event.clientX = Math.random() * (maxX - minX) + minX;
+		event.clientY = Math.random() * (maxY - minY) + minY;
+		event.dataTransfer = new Object();
+		event.dataTransfer.getData = function(stuff) {
+			return player.id;
+		}
+		drop(event);
+	}
+	return Object.values(PLAYERS)
+		.filter(p => !p.state)
+		.forEach(p => f(p));
+	render();
 }
 
 function loop() {
@@ -208,7 +242,7 @@ function loop() {
 	render();
 }
 
-function updatePosition(player, acceleration) {
+function updatePosition(player) {
 	let newPos = player.pos.add(player.speed.mul(LAPSE));
 
 	if (isWithinBoundries(newPos) && !collides(player, newPos)) {
@@ -217,8 +251,6 @@ function updatePosition(player, acceleration) {
 	} else {
 		player.speed = ZERO;
 	}
-
-	player.acceleration = acceleration;
 }
 
 function inContact(player1, player2) {
@@ -272,7 +304,7 @@ function clear(ctx) {
 
 function renderPlayer(ctx, player) {
 	let color = player.getColor();
-	updatePlayerColor(player.id, color);
+	updatePlayerInfo(player);
 	ctx.beginPath();
 	ctx.fillStyle = color;
 	ctx.arc(player.pos.x, player.pos.y, RADIUS, 0, 2 * Math.PI);

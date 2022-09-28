@@ -8,10 +8,17 @@
   <body>
     <div id="playersDiv" style="border:1px solid #000000; float:left;"></div>
     <div align="center">
-      <canvas id="arenaCanvas" width="800" height="600" style="border:1px solid #000000;" ondrop="drop(event)" ondragover="event.preventDefault();"></canvas>
+      <canvas id="arenaCanvas" width="800" height="800" style="border:1px solid #000000;" ondrop="drop(event)" ondragover="event.preventDefault();"></canvas>
     </div>
     <div align="center">
       <button onclick="start();">Bataia</button>
+    </div>
+    <div align="center">
+      <button onclick="placeAllPlayersRandomly();">Repartir</button>
+    </div>
+    <div id="log" style="border:1px solid #000000; float:right;">
+      <textarea>
+      </textarea
     </div>
     <script>
       let playersDiv = document.getElementById('playersDiv');
@@ -21,7 +28,7 @@
         newPlayerDiv.style.border = '1px solid #000000';
         newPlayerDiv.draggable = true;
         newPlayerDiv.ondragstart = drag;
-        newPlayerDiv.innerHTML = player.name;
+        newPlayerDiv.innerHTML = player.name + ' (' + player.health + ')';
         playersDiv.append(newPlayerDiv);
       });
     </script>
