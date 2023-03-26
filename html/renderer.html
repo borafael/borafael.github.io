@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Fun with canvas</title>
+    <script src="../js/renderer.js"></script>
+  </head>
+  <body
+    <div align="center">
+      <div style="border: 1px solid green;">
+        <canvas id="viewport" width="800" height="800" style="border: 1px solid blue;"></canvas>
+      </div>
+      <div style="border: 1px solid red; height: 100%;">
+        <button onclick="javascript:rotate('up');">Up</button>
+        <button onclick="javascript:rotate('down');">Down</button>
+      </div>
+      <div style="border: 1px solid black; width: 100%;">
+        <button onclick="javascript:rotate('left');">Left</button>
+        <button onclick="javascript:rotate('right');">Right</button>
+      </div>
+    </div>
+    <script type="text/javascript">
+      render();
+    </script>
+  </body>
+</html>
