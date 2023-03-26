@@ -1,4 +1,4 @@
-function Vector(x, y) {
+export function Vector(x, y) {
     this.x = x;
     this.y = y;
     this.add = function add(vector) {
@@ -7,10 +7,10 @@ function Vector(x, y) {
     this.sub = function sub(vector) {
         return new Vector(this.x - vector.x, this.y - vector.y);
     };
-    this.mul = function sub(num) {
+    this.mul = function mul(num) {
         return new Vector(this.x * num, this.y * num);
     };
-    this.dot = function sub(vector) {
+    this.dot = function dot(vector) {
         return this.x * vector.x + this.y * vector.y;
     };
     this.abs = function abs() {

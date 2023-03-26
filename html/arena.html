@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Fun with canvas</title>
-    <script src="../js/arena.js"></script>
+    <script type="module" src="../js/arena.js"></script>
   </head>
   <body>
     <div id="playersDiv" style="border:1px solid #000000; float:left;"></div>
@@ -20,17 +20,5 @@
       <textarea>
       </textarea
     </div>
-    <script>
-      let playersDiv = document.getElementById('playersDiv');
-      Object.values(PLAYERS).forEach(player => {
-        let newPlayerDiv = document.createElement('div');
-        newPlayerDiv.id = player.id;
-        newPlayerDiv.style.border = '1px solid #000000';
-        newPlayerDiv.draggable = true;
-        newPlayerDiv.ondragstart = drag;
-        newPlayerDiv.innerHTML = player.name + ' (' + player.health + ')';
-        playersDiv.append(newPlayerDiv);
-      });
-    </script>
   </body>
 </html>

@@ -1,3 +1,6 @@
+// Imports
+import {Vector} from './vector.js';
+
 // Constants
 
 const WIDTH = 800;
@@ -10,7 +13,7 @@ const CENTER = new Vector(WIDTH / 2, HEIGHT / 2);
 const MAX_HEALTH = 100;
 const INTERVAL = 1;
 
-const PLAYERS = {
+export const PLAYERS = {
 	0: new Player(0, 'Vieira', 100, 10),
 	1: new Player(1, 'El Tío', 10, 10),
 	2: new Player(2, 'Sergini', 10, 10),
@@ -50,7 +53,7 @@ const ATTACKING = new State(
 	function(hitter, hitee) {
 		hitee.health--;
 
-		newPos = hitee.pos.add(hitee.pos.sub(hitter.pos).mul(0.1));
+		let newPos = hitee.pos.add(hitee.pos.sub(hitter.pos).mul(0.1));
 		if (isWithinBoundries(newPos)) {
 			hitee.pos = newPos;
 		}
@@ -148,36 +151,13 @@ function Player(id, name, force, mass) {
 	}
 }
 
-function Vector(x, y) {
-	this.x = x;
-	this.y = y;
-	this.add = function(vector) {
-		return new Vector(this.x + vector.x, this.y + vector.y);
-	};
-	this.sub = function(vector) {
-		return new Vector(this.x - vector.x, this.y - vector.y);
-	};
-	this.mul = function(num) {
-		return new Vector(this.x * num, this.y * num);
-	};
-	this.dot = function(vector) {
-		return this.x * vector.x + this.y * vector.y;
-	};
-	this.abs = function() {
-		return Math.sqrt(this.x * this.x + this.y * this.y);
-	}
-	this.normal = function() {
-		return new Vector(1, -(this.x / this.y));
-	}
-}
-
 // Functions
 
-function drag(event) {
+export function drag(event) {
 	event.dataTransfer.setData("text", event.target.id);
 }
 
-function drop(event) {
+window.drop = function drop(event) {
 	let id = event.dataTransfer.getData('text');
 	let element = document.getElementById(id);
 	updatePlayerInfo(PLAYERS[id]);
@@ -208,32 +188,31 @@ function getCanvasCoordinates(canvas, x, y) {
 	return new Vector(x - rect.left, y - rect.top);
 }
 
-function start() {
+window.start = function start() {
 	state = 1;
 	timerId = setInterval(loop, INTERVAL);
 	console.log('Bataia!');
 }
 
-function placeAllPlayersRandomly() {
+window.placeAllPlayersRandomly = function placeAllPlayersRandomly() {
 	var canvas = getCanvas();
 	var canvasRect = getCanvas().getBoundingClientRect();
 	var minX = canvasRect.left + RADIUS * 2;
 	var maxX = minX + canvas.width - RADIUS * 2;
 	var minY = canvasRect.top + RADIUS * 2;
 	var maxY = minY +  canvas.height - RADIUS * 2;
-	f = function(player) {
-		event = new Object();
-		event.clientX = Math.random() * (maxX - minX) + minX;
-		event.clientY = Math.random() * (maxY - minY) + minY;
-		event.dataTransfer = new Object();
-		event.dataTransfer.getData = function(stuff) {
-			return player.id;
-		}
-		drop(event);
-	}
 	return Object.values(PLAYERS)
 		.filter(p => !p.state)
-		.forEach(p => f(p));
+		.forEach(p => {
+			event = new Object();
+			event.clientX = Math.random() * (maxX - minX) + minX;
+			event.clientY = Math.random() * (maxY - minY) + minY;
+			event.dataTransfer = new Object();
+			event.dataTransfer.getData = function(stuff) {
+				return p.id;
+			}
+			drop(event);
+		});
 	render();
 }
 
@@ -316,3 +295,14 @@ function renderPlayer(ctx, player) {
 	ctx.fillStyle = 'black';
 	ctx.fillText(player.getBubbleText(), offset.x, offset.y);
 }
+
+let playersDiv = document.getElementById('playersDiv');
+Object.values(PLAYERS).forEach(player => {
+	let newPlayerDiv = document.createElement('div');
+	newPlayerDiv.id = player.id;
+	newPlayerDiv.style.border = '1px solid #000000';
+	newPlayerDiv.draggable = true;
+	newPlayerDiv.ondragstart = drag;
+	newPlayerDiv.innerHTML = player.name + ' (' + player.health + ')';
+	playersDiv.append(newPlayerDiv);
+});
