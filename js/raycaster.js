@@ -1,3 +1,6 @@
+// Imports
+import {Vector} from './vector.js';
+
 var RAYCASTER = {};
 
 function init() {
@@ -153,9 +156,9 @@ function renderViewPort() {
 
 	for (var column = 0; column < viewPort.width; column = column + 1) {
 		var offset = -(Math.PI / 6) + delta * column;
-		distance = cast(RAYCASTER.angle + offset);
+		var distance = cast(RAYCASTER.angle + offset);
 		//projection = RAYCASTER.size * 277 / (distance * Math.cos(offset));
-		projection = RAYCASTER.size / 2 * 277 / distance;
+		var projection = RAYCASTER.size / 2 * 277 / distance;
 
 		ctx.beginPath();
 		//ctx.strokeStyle = getRandomColor();
@@ -249,25 +252,4 @@ function keyUpHandler(event) {
 	}
 }
 
-function Vector(x, y) {
-	this.x = x;
-	this.y = y;
-	this.add = function add(vector) {
-		return new Vector(this.x + vector.x, this.y + vector.y);
-	};
-	this.sub = function sub(vector) {
-		return new Vector(this.x - vector.x, this.y - vector.y);
-	};
-	this.mul = function sub(num) {
-		return new Vector(this.x * num, this.y * num);
-	};
-	this.dot = function sub(vector) {
-		return this.x * vector.x + this.y * vector.y;
-	};
-	this.abs = function abs() {
-		return Math.sqrt(this.x * this.x + this.y * this.y);
-	}
-	this.normal = function normal() {
-		return new Vector(1, -(this.x / this.y));
-	}
-}
+init();
